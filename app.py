@@ -1,36 +1,30 @@
-import subprocess
 import streamlit as st
+import requests
 
-# Title for the Streamlit App
-st.title("Marimo Launcher")
+# Configuration for Marimo app
+MARIMO_INTERNAL_URL = "http://127.0.0.1:8000"  # Marimo's local URL
+MARIMO_IFRAME_URL = "http://01935556-5c7e-381a-2829-d30da942a8d0.share.connect.posit.cloud/marimo"  # External proxy URL (if configured)
 
-# Functionality to Start/Stop Marimo Process
-if "marimo_process" not in st.session_state:
-    st.session_state.marimo_process = None
+# Function to check if Marimo is reachable
+def is_marimo_running():
+    try:
+        response = requests.get(MARIMO_INTERNAL_URL, timeout=5)
+        return response.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
 
-# Run Marimo Button
-if st.button("Run Marimo Notebook"):
-    if st.session_state.marimo_process is None or st.session_state.marimo_process.poll() is not None:
-        # Start the Marimo app
-        st.session_state.marimo_process = subprocess.Popen(["marimo", "run", "intro.py"])
-        st.success("Marimo app is running!")
-    else:
-        st.warning("Marimo is already running.")
+# Streamlit app UI
+st.title("Streamlit + Marimo Integration")
+st.write("This Streamlit app embeds the Marimo notebook as an interactive iframe.")
 
-# Stop Marimo Button
-if st.button("Stop Marimo Notebook"):
-    if st.session_state.marimo_process and st.session_state.marimo_process.poll() is None:
-        st.session_state.marimo_process.terminate()
-        st.session_state.marimo_process = None
-        st.success("Marimo app has been stopped.")
-    else:
-        st.warning("Marimo is not running.")
-
-# Embed the Marimo app using an iframe
-st.markdown(
-    '<iframe src="http://localhost:8000" width="100%" height="800"></iframe>',
-    unsafe_allow_html=True,
-)
-
-# Note about setup
-st.write("Ensure that `marimo` is installed, `intro.py` is in the working directory, and port 8000 is available.")
+# Check if Marimo is running
+if is_marimo_running():
+    st.markdown(
+        f'<iframe src="{MARIMO_IFRAME_URL}" width="100%" height="800"></iframe>',
+        unsafe_allow_html=True,
+    )
+else:
+    st.error(
+        "Marimo app is not accessible. Ensure it is running and properly configured. "
+        "If you're hosting this on Posit Cloud, make sure Marimo is proxied to the correct URL."
+    )
