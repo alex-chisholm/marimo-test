@@ -1,2 +1,5 @@
 marimo
 streamlit
+bokeh
+dash
+jupyter
